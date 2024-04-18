@@ -2,6 +2,8 @@ import User from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import generarJWT from  "../helpers/generarJWT.js"
 import mongoose from "mongoose";
+import Post from "../models/postModel.js";
+import { v2 as cloudinary } from "cloudinary";
 
 const signupUser = async (req, res) => {
 
@@ -146,24 +148,20 @@ const followUnFollowUser = async (req, res) => {
 
 
 const updateUser = async (req, res) => {
-
-
-	/* const { name, email, username, password, bio } = req.body;
+    
+	 const { age, country, sexo , bio } = req.body;
 	let { profilePic } = req.body;
+
+    
 
 	const userId = req.user._id;
 	try {
 		let user = await User.findById(userId);
-		if (!user) return res.status(400).json({ error: "User not found" });
+		if (!user) return res.status(400).json({ error: "Usuario no encontrado" });
 
 		if (req.params.id !== userId.toString())
-			return res.status(400).json({ error: "You cannot update other user's profile" });
+			return res.status(400).json({ error: "No puedes Actualizar otro usuario" });
 
-		if (password) {
-			const salt = await bcrypt.genSalt(10);
-			const hashedPassword = await bcrypt.hash(password, salt);
-			user.password = hashedPassword;
-		}
 
 		if (profilePic) {
 			if (user.profilePic) {
@@ -174,34 +172,30 @@ const updateUser = async (req, res) => {
 			profilePic = uploadedResponse.secure_url;
 		}
 
-		user.name = name || user.name;
-		user.email = email || user.email;
-		user.username = username || user.username;
+		user.age = age || user.age;
+		user.country = country || user.country;
+		user.sexo = sexo || user.sexo;
 		user.profilePic = profilePic || user.profilePic;
 		user.bio = bio || user.bio;
 
 		user = await user.save();
 
-		// Find all posts that this user replied and update username and userProfilePic fields
 		await Post.updateMany(
 			{ "replies.userId": userId },
 			{
 				$set: {
-					"replies.$[reply].username": user.username,
 					"replies.$[reply].userProfilePic": user.profilePic,
 				},
 			},
 			{ arrayFilters: [{ "reply.userId": userId }] }
 		);
 
-		// password should be null in response
-		user.password = null;
 
 		res.status(200).json(user);
 	} catch (err) {
 		res.status(500).json({ error: err.message });
 		console.log("Error in updateUser: ", err.message);
-	} */
+	}  
 };
 
 

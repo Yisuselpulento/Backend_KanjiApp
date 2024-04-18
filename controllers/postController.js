@@ -1,10 +1,12 @@
 import Post from "../models/postModel.js";
 import User from "../models/userModel.js";
+import { v2 as cloudinary } from "cloudinary";
 
 const createPost = async (req, res) => {
 	try {
-		const { postedBy, text } = req.body;
-		let { img } = req.body;
+		const { postedBy, text, img } = req.body;
+
+      console.log(req.body)
 
 		if (!postedBy || !text) {
 			return res.status(400).json({ error: "Usuario y texto son requeridos" });
@@ -24,19 +26,19 @@ const createPost = async (req, res) => {
 			return res.status(400).json({ error: `El texto no puede ser mayor a ${maxLength} caracteres` });
 		}
 
-	/* 	if (img) {
+		let imageUrl = null;
+		if (img) {
 			const uploadedResponse = await cloudinary.uploader.upload(img);
-			img = uploadedResponse.secure_url;
+			imageUrl = uploadedResponse.secure_url;
 		}
- */
-		const newPost = new Post({ postedBy, text, img });
-		await newPost.save();
 
+		const newPost = new Post({ postedBy, text, img: imageUrl });
+		await newPost.save();
+	
 		res.status(201).json(newPost);
 	} catch (err) {
         console.log(err);
         res.status(500).json({ message: "Error al crear el post" });
-		
 	}
 };
 
@@ -82,7 +84,7 @@ const deletePost = async (req, res) => {
 
 const getUserPosts = async (req, res) => {
 	const { id } = req.params;
-    console.log(id)
+    
 	try {
         const user = await User.findById(id);
 		if (!user) {
