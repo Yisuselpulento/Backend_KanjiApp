@@ -198,6 +198,26 @@ const updateUser = async (req, res) => {
 	}  
 };
 
+const searchUserbyUsername = async (req, res) => {
+    try {
+      const nickUser = req.params.username;     
+  
+      if (!nickUser) {
+        return res.status(400).json({ error: 'El nombre es requerido' });
+      }
+  
+      const usuarios = await User.find({ username: { $regex: nickUser, $options: 'i' } }); 
+  
+  
+      if (!usuarios.length) {
+        return res.status(404).json({ error: 'No se encontraron usuarios' });
+      }
+     
+      return res.status(200).json(usuarios);
+    } catch (error) {
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  }
 
 
-export { signupUser, loginUser , getUserProfile ,updateUser,followUnFollowUser, perfil }
+export { signupUser, loginUser , getUserProfile ,updateUser,followUnFollowUser, perfil,searchUserbyUsername }

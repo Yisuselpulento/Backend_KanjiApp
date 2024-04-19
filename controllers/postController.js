@@ -68,10 +68,11 @@ const deletePost = async (req, res) => {
 			return res.status(401).json({ error: "Unauthorized to delete post" });
 		}
 
-		/* if (post.img) {
-			const imgId = post.img.split("/").pop().split(".")[0];
-			await cloudinary.uploader.destroy(imgId);
-		} */
+		 if (post.img) {
+			const imgIdMatch = post.img.match(/\/([^/]+)\.jpg$/);
+          const imgId = imgIdMatch ? imgIdMatch[1] : null;
+			await cloudinary.uploader.destroy(`images/${imgId}`);
+		} 
 
 		await Post.findByIdAndDelete(req.params.id);
 

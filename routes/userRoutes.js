@@ -5,7 +5,8 @@ import { signupUser,
          getUserProfile,
          updateUser,
          followUnFollowUser ,
-         perfil
+         perfil,
+         searchUserbyUsername
  } from "../controllers/userController.js";
 
 
@@ -17,7 +18,7 @@ router.get("/perfil", protectRoute, perfil);
 router.get("/profile/:query",protectRoute, getUserProfile);
 router.post("/follow/:id", protectRoute, followUnFollowUser);
 router.put("/update/:id", protectRoute, updateUser);
-
+router.get("/search/:username", protectRoute, searchUserbyUsername);
  
 
 export default router;
