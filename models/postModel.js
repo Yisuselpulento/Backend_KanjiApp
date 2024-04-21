@@ -30,6 +30,7 @@ const postSchema = mongoose.Schema(
 				text: {
 					type: String,
 					required: true,
+					maxLength: 500,
 				},
 				userProfilePic: {
 					type: String,
@@ -37,6 +38,7 @@ const postSchema = mongoose.Schema(
 				username: {
 					type: String,
 				},
+				  
 			},
 		],  
     createdAt: {

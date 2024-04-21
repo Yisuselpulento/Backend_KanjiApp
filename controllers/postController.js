@@ -6,8 +6,6 @@ const createPost = async (req, res) => {
 	try {
 		const { postedBy, text, img } = req.body;
 
-      console.log(req.body)
-
 		if (!postedBy || !text) {
 			return res.status(400).json({ error: "Usuario y texto son requeridos" });
 		}
@@ -43,21 +41,22 @@ const createPost = async (req, res) => {
 };
 
 const getPost = async (req, res) => {
-    try {
-        const post = await Post.findById(req.params.id)
-                                .select('_id text likes replies createdAt postedBy img')
-                                .populate('postedBy', 'username profilePic')
-                                .lean();
+  try {
+      const post = await Post.findById(req.params.id)
+          .select('_id text likes replies createdAt postedBy img')
+          .populate('postedBy', 'username profilePic')
+          .populate('replies.userId', 'username profilePic') 
+          .lean();
 
-        if (!post) {
-            return res.status(404).json({ error: "Post no encontrado" });
-        }
+      if (!post) {
+          return res.status(404).json({ error: "Post no encontrado" });
+      }
 
-        res.status(200).json(post);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: error.message });
-    }
+      res.status(200).json(post);
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+  }
 };
 
 const deletePost = async (req, res) => {
@@ -175,6 +174,55 @@ const getFeedPosts = async (req, res) => {
     } 
 };
 
+ const createReply = async (req, res) => {
+    const { postId } = req.params;
+    const { text, img ,postedBy} = req.body;
+  
+    try {
+      const post = await Post.findById(postId);
+      if (!post) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+  
+      const newReply = {
+        userId: postedBy,
+        text,
+        img ,
+      };
+  
+      post.replies.push(newReply);
+      await post.save();
+  
+      res.status(201).json({ message: 'Reply created successfully', reply: newReply });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  };
+    
+const deleteReply = async (req, res) => {
+    const { postId, replyId } = req.params;
+    try {
+      const post = await Post.findById(postId);
+      if (!post) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+  
+      const replyIndex = post.replies.findIndex(reply => reply._id.toString() === replyId.toString());
+      if (replyIndex === -1) {
+        
+        return res.status(404).json({ message: 'Reply not found' });
+      }
+  
+      post.replies.splice(replyIndex, 1);
+      await post.save();
+
+      res.status(200).json({ message: 'Reply deleted successfully' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  };
 
 
-export { createPost , getPost , deletePost , getUserPosts , likeUnlikePost , getFeedPosts  };
+export { createPost , getPost , deletePost , getUserPosts , likeUnlikePost , getFeedPosts, createReply , deleteReply };

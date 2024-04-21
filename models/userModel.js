@@ -55,10 +55,6 @@ const userSchema = mongoose.Schema(
             type: String,
             default: 'No Editado'
         },
-		isFrozen: {
-			type: Boolean,
-			default: false,
-		},
 	},
 	{
 		timestamps: true,

@@ -6,8 +6,9 @@ import {
     deletePost,
     getUserPosts,
     likeUnlikePost,
-    getFeedPosts
-
+    getFeedPosts,
+    createReply ,
+  deleteReply
 } from "../controllers/postController.js";
 
 
@@ -20,6 +21,8 @@ router.delete("/:id", protectRoute, deletePost);
 router.get("/user/:id", getUserPosts);
 router.put("/like/:id", protectRoute, likeUnlikePost);
 
+router.post("/create/:postId", protectRoute, createReply);
+router.delete("/:postId/:replyId", protectRoute, deleteReply);
 
 
 export default router;
