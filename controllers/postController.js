@@ -43,18 +43,21 @@ const createPost = async (req, res) => {
 };
 
 const getPost = async (req, res) => {
-	try {
-		const post = await Post.findById(req.params.id);
+    try {
+        const post = await Post.findById(req.params.id)
+                                .select('_id text likes replies createdAt postedBy img')
+                                .populate('postedBy', 'username profilePic')
+                                .lean();
 
-		if (!post) {
-			return res.status(404).json({ error: "Post no encontrado" });
-		}
+        if (!post) {
+            return res.status(404).json({ error: "Post no encontrado" });
+        }
 
-		res.status(200).json(post);
-	} catch (err) {
-        console.log(err)
-		res.status(500).json({ error: err.message });
-	}
+        res.status(200).json(post);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
 };
 
 const deletePost = async (req, res) => {
@@ -84,20 +87,33 @@ const deletePost = async (req, res) => {
 };
 
 const getUserPosts = async (req, res) => {
-	const { id } = req.params;
-    
-	try {
+    const { id } = req.params;
+
+    try {
         const user = await User.findById(id);
-		if (!user) {
-			return res.status(404).json({ error: "Usuario no encontrado" });
-		}
+        if (!user) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
 
-		const posts = await Post.find({ postedBy: user._id }).sort({ createdAt: -1 });
+        const posts = await Post.find({ postedBy: user._id }).sort({ createdAt: -1 })
+                                .populate('postedBy', 'username profilePic')
+                                .lean();
 
-		res.status(200).json(posts);
-	} catch (error) {
-		res.status(500).json({ error: error.message });
-	}
+      
+        const formattedPosts = posts.map(post => ({
+            ...post,
+            postedBy: {
+                _id: user._id,
+                username: user.username,
+                profilePic: user.profilePic
+            }
+           
+        }));
+
+        res.status(200).json(formattedPosts);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 };
 
 const likeUnlikePost = async (req, res) => {
@@ -128,8 +144,7 @@ const likeUnlikePost = async (req, res) => {
 };
 
 const getFeedPosts = async (req, res) => {
-   
-     try {
+    try {
         const userId = req.user.id;
         const user = await User.findById(userId);
         if (!user) {
@@ -137,14 +152,29 @@ const getFeedPosts = async (req, res) => {
         }
 
         const following = user.following;
-        const feedPosts = await Post.find({ postedBy: { $in: following } }).sort({ createdAt: -1 });  
+        const feedPosts = await Post.find({ postedBy: { $in: following } })
+                                    .sort({ createdAt: -1 })
+                                    .populate('postedBy', 'username profilePic')
+                                    .lean();  
 
-        res.status(200).json(feedPosts); 
+        
+        const formattedFeedPosts = feedPosts.map(post => ({
+            ...post,
+            postedBy: {
+                _id: post.postedBy._id,
+                username: post.postedBy.username,
+                profilePic: post.postedBy.profilePic
+            }
+           
+        }));
+
+        res.status(200).json(formattedFeedPosts); 
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });
     } 
 };
+
 
 
 export { createPost , getPost , deletePost , getUserPosts , likeUnlikePost , getFeedPosts  };
