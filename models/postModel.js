@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const postSchema = mongoose.Schema(
 	{
-		postedBy: {
+		author: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "User",
 			required: true,
@@ -20,6 +20,10 @@ const postSchema = mongoose.Schema(
 			ref: "User",
 			default: [],
 		},
+		numberOfLikes : {
+			type : Number,
+			default : 0
+		},
 		replies: [
 			{
 				userId: {
@@ -31,16 +35,13 @@ const postSchema = mongoose.Schema(
 					type: String,
 					required: true,
 					maxLength: 500,
-				},
-				userProfilePic: {
-					type: String,
-				},
-				username: {
-					type: String,
-				},
-				  
+				}  
 			},
 		],  
+		numberOfReplies : {
+			type : Number,
+			default : 0
+		},
     createdAt: {
         type: Date,
         default: Date.now

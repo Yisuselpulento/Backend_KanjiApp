@@ -4,7 +4,8 @@ import { v2 as cloudinary } from "cloudinary";
 
 const createPost = async (req, res) => {
 	try {
-		const { postedBy, text, img } = req.body;
+		const { text, img } = req.body;
+    const postedBy = req.user.id
 
 		if (!postedBy || !text) {
 			return res.status(400).json({ error: "Usuario y texto son requeridos" });
@@ -30,8 +31,9 @@ const createPost = async (req, res) => {
 			imageUrl = uploadedResponse.secure_url;
 		}
 
-		const newPost = new Post({ postedBy, text, img: imageUrl });
+		const newPost = new Post({ author:postedBy, text, img: imageUrl });
 		await newPost.save();
+
 	
 		res.status(201).json(newPost);
 	} catch (err) {
@@ -40,11 +42,12 @@ const createPost = async (req, res) => {
 	}
 };
 
+// no edit yet
 const getPost = async (req, res) => {
   try {
       const post = await Post.findById(req.params.id)
-          .select('_id text likes replies createdAt postedBy img')
-          .populate('postedBy', 'username profilePic')
+           .select('-__v -updatedAt')
+          .populate('author', 'username profilePic')
           .populate('replies.userId', 'username profilePic') 
           .lean();
 
@@ -58,7 +61,7 @@ const getPost = async (req, res) => {
       res.status(500).json({ error: error.message });
   }
 };
-
+// no edit yet
 const deletePost = async (req, res) => {
 	try {
 		const post = await Post.findById(req.params.id);
@@ -94,14 +97,15 @@ const getUserPosts = async (req, res) => {
             return res.status(404).json({ error: "Usuario no encontrado" });
         }
 
-        const posts = await Post.find({ postedBy: user._id }).sort({ createdAt: -1 })
-                                .populate('postedBy', 'username profilePic')
+        const posts = await Post.find({ author: user._id }).sort({ createdAt: -1 })
+                                .populate('author', 'username profilePic')
+                                .select('-__v -updatedAt')
                                 .lean();
 
       
         const formattedPosts = posts.map(post => ({
             ...post,
-            postedBy: {
+            author: {
                 _id: user._id,
                 username: user.username,
                 profilePic: user.profilePic
@@ -114,7 +118,7 @@ const getUserPosts = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
+// no edit yet
 const likeUnlikePost = async (req, res) => {
 	try {
 		const { id: postId } = req.params;
@@ -141,7 +145,7 @@ const likeUnlikePost = async (req, res) => {
 		res.status(500).json({ error: err.message });
 	}
 };
-
+// no edit yet
 const getFeedPosts = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -173,7 +177,7 @@ const getFeedPosts = async (req, res) => {
         res.status(500).json({ error: err.message });
     } 
 };
-
+// no edit yet
  const createReply = async (req, res) => {
     const { postId } = req.params;
     const { text, img ,postedBy} = req.body;
@@ -199,7 +203,7 @@ const getFeedPosts = async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
     }
   };
-    
+ // no edit yet   
 const deleteReply = async (req, res) => {
     const { postId, replyId } = req.params;
     try {

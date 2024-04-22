@@ -23,7 +23,7 @@ const userSchema = mongoose.Schema(
 		},
 		profilePic: {
 			type: String,
-			default: 'default.jpg'
+			default: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTm_I2frPqb5sUeuAr-5C3vuzS-xSt8AMZqzA&usqp=CAU'
 		},
         token: {
             type: String,
@@ -55,6 +55,7 @@ const userSchema = mongoose.Schema(
             type: String,
             default: 'No Editado'
         },
+	
 	},
 	{
 		timestamps: true,
