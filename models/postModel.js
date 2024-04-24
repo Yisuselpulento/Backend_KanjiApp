@@ -35,7 +35,13 @@ const postSchema = mongoose.Schema(
 					type: String,
 					required: true,
 					maxLength: 500,
-				}  
+				},
+				userProfilePic: {
+					type: String,
+				},
+				username: {
+					type: String,
+				}		  
 			},
 		],  
 		numberOfReplies : {

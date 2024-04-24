@@ -42,7 +42,6 @@ const createPost = async (req, res) => {
 	}
 };
 
-// no edit yet
 const getPost = async (req, res) => {
   try {
       const post = await Post.findById(req.params.id)
@@ -61,7 +60,7 @@ const getPost = async (req, res) => {
       res.status(500).json({ error: error.message });
   }
 };
-// no edit yet
+
 const deletePost = async (req, res) => {
 	try {
 		const post = await Post.findById(req.params.id);
@@ -69,7 +68,7 @@ const deletePost = async (req, res) => {
 			return res.status(404).json({ error: "Post no encontrado" });
 		}
 
-		if (post.postedBy.toString() !== req.user._id.toString()) {
+		if (post.author.toString() !== req.user._id.toString()) {
 			return res.status(401).json({ error: "Unauthorized to delete post" });
 		}
 
@@ -118,7 +117,7 @@ const getUserPosts = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-// no edit yet
+
 const likeUnlikePost = async (req, res) => {
 	try {
 		const { id: postId } = req.params;
@@ -133,11 +132,12 @@ const likeUnlikePost = async (req, res) => {
 		const userLikedPost = post.likes.includes(userId);
 
 		if (userLikedPost) {
-			await Post.updateOne({ _id: postId }, { $pull: { likes: userId } });
+			await Post.updateOne({ _id: postId }, { $pull: { likes: userId }, $inc: { numberOfLikes: -1 } });
 			res.status(200).json({ message: "Post unliked successfully" });
 		} else {
 			post.likes.push(userId);
 			await post.save();
+			await Post.updateOne({ _id: postId }, { $inc: { numberOfLikes: 1 } });
 			res.status(200).json({ message: "Post liked successfully" });
 		}
 	} catch (err) {
@@ -145,7 +145,7 @@ const likeUnlikePost = async (req, res) => {
 		res.status(500).json({ error: err.message });
 	}
 };
-// no edit yet
+
 const getFeedPosts = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -155,18 +155,18 @@ const getFeedPosts = async (req, res) => {
         }
 
         const following = user.following;
-        const feedPosts = await Post.find({ postedBy: { $in: following } })
+        const feedPosts = await Post.find({ author: { $in: following } })
                                     .sort({ createdAt: -1 })
-                                    .populate('postedBy', 'username profilePic')
+                                    .populate('author', 'username profilePic')
                                     .lean();  
 
         
         const formattedFeedPosts = feedPosts.map(post => ({
             ...post,
-            postedBy: {
-                _id: post.postedBy._id,
-                username: post.postedBy.username,
-                profilePic: post.postedBy.profilePic
+            author: {
+                _id: post.author._id,
+                username: post.author.username,
+                profilePic: post.author.profilePic
             }
            
         }));
@@ -177,33 +177,37 @@ const getFeedPosts = async (req, res) => {
         res.status(500).json({ error: err.message });
     } 
 };
-// no edit yet
- const createReply = async (req, res) => {
-    const { postId } = req.params;
-    const { text, img ,postedBy} = req.body;
-  
-    try {
-      const post = await Post.findById(postId);
-      if (!post) {
-        return res.status(404).json({ message: 'Post not found' });
-      }
-  
-      const newReply = {
-        userId: postedBy,
-        text,
-        img ,
-      };
-  
-      post.replies.push(newReply);
-      await post.save();
-  
-      res.status(201).json({ message: 'Reply created successfully', reply: newReply });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
+
+const createReply = async (req, res) => {
+  const { postId } = req.params;
+  const { text } = req.body;
+  const userId = req.user._id;
+  try {
+    const post = await Post.findById(postId).populate('replies.userId', 'username profilePic');
+    if (!post) {
+      return res.status(404).json({ message: 'Publicación no encontrada' });
     }
-  };
- // no edit yet   
+
+    const newReply = {
+      userId,
+      text,   
+    };
+
+    post.replies.push(newReply);
+    post.numberOfReplies = post.replies.length;
+
+    await post.save();
+
+    // Recuperar la respuesta completa (con el usuario poblado)
+    const savedReply = await Post.findById(postId).populate('replies.userId', 'username profilePic').lean().exec();
+
+    res.status(201).json({ message: 'Respuesta creada correctamente', newReply: savedReply.replies[savedReply.replies.length - 1] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+   
 const deleteReply = async (req, res) => {
     const { postId, replyId } = req.params;
     try {
@@ -219,6 +223,7 @@ const deleteReply = async (req, res) => {
       }
   
       post.replies.splice(replyIndex, 1);
+      post.numberOfReplies = post.replies.length; 
       await post.save();
 
       res.status(200).json({ message: 'Reply deleted successfully' });
