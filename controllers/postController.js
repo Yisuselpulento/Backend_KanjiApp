@@ -8,7 +8,7 @@ const createPost = async (req, res) => {
     const postedBy = req.user.id
 
 		if (!postedBy || !text) {
-			return res.status(400).json({ error: "Usuario y texto son requeridos" });
+			return res.status(400).json({ error: "El texto esta vacio" });
 		}
 
 		const user = await User.findById(postedBy);
@@ -83,7 +83,7 @@ const deletePost = async (req, res) => {
 		res.status(200).json({ message: "Post eliminado exitosamente" });
 	} catch (err) {
         console.log(err)
-		res.status(500).json({ error: err.message });
+        res.status(500).json({ message: "Error al tratar de borrar el post" });
 	}
 };
 
@@ -198,13 +198,12 @@ const createReply = async (req, res) => {
 
     await post.save();
 
-    // Recuperar la respuesta completa (con el usuario poblado)
     const savedReply = await Post.findById(postId).populate('replies.userId', 'username profilePic').lean().exec();
 
     res.status(201).json({ message: 'Respuesta creada correctamente', newReply: savedReply.replies[savedReply.replies.length - 1] });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    console.log(error);
+    res.status(500).json({ message: "Error al crear el comentario" });
   }
 };
    
@@ -228,8 +227,8 @@ const deleteReply = async (req, res) => {
 
       res.status(200).json({ message: 'Reply deleted successfully' });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
+      console.log(error);
+      res.status(500).json({ message: "Error al tratar de borrar comentario" });
     }
   };
 
